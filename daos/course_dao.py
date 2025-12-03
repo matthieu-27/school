@@ -19,8 +19,7 @@ class CourseDao(Dao[Course]):
             values = (course.name, course.start_date, course.end_date, 1)
             cursor.execute(sql, values)
             Dao.connection.commit()
-            print(f"Record {cursor.rowcount} inserted")
-
+            print(f"INSERTED COURSE: ROW ID {cursor.lastrowid}")
 
     def read(self, id_course: int) -> Optional[Course]:
         """Renvoit le cours correspondant à l'entité dont l'id est id_course
@@ -31,7 +30,7 @@ class CourseDao(Dao[Course]):
             sql = "SELECT * FROM course WHERE id_course=%s"
             cursor.execute(sql, (id_course,))
             record = cursor.fetchone()
-        course = CourseDao.check_record(record)
+        course = CourseDao.get_data(record)
 
         if course:
             return course
@@ -39,15 +38,15 @@ class CourseDao(Dao[Course]):
             return None
 
     @staticmethod
-    def check_record(record: tuple[Any, ...] | None) -> Course | None:
+    def get_data(record: tuple[Any, ...] | None) -> Course | None:
         if record is not None:
             course = Course(record['name'], record['start_date'], record['end_date'])
             course.id = record['id_course']
+            # course.teacher = record['id_teacher'] TODO : IMPLEMENT DAO
             return course
         return None
 
-
-    def read_all(self) -> list[Course]:
+    def read_all(self) -> Optional[list[Course]]:
         """Renvoie un ensemble de tous les cours présents en base de données."""
         courses = []
         try:
@@ -56,21 +55,34 @@ class CourseDao(Dao[Course]):
                 cursor.execute(sql)
                 records = cursor.fetchall()
             for rec in records:
-                course = self.check_record(rec)
+                course = self.get_data(rec)
                 if course:
                     courses.append(course)
         except Exception as e:
             print(f"Erreur lors de la lecture des cours : {e}")
+            return None
         return courses
 
-    def update(self, course: Course) -> bool:
-        """Met à jour en BD l'entité Course correspondant à course, pour y correspondre
-
-        :param course: cours déjà mis à jour en mémoire
-        :return: True si la mise à jour a pu être réalisée
-        """
-        ...
-        return True
+    def update(self, id_value: int, **fields: Any) -> bool:
+        """Met à jour en BD l'entité Course correspondant à course, pour y correspondre"""
+        with Dao.connection.cursor() as cursor:
+            query = ""
+            count = 1
+            for key, val in fields.items():
+                query += f"{key} = '{str(val)}'{", " if len(fields) != count else ""}"
+                count += 1
+            sql = ("UPDATE course SET "
+                   + query +
+                   f" WHERE id_course={id_value}")
+            print(sql)
+            try:
+                cursor.execute(sql)
+                Dao.connection.commit()
+                print(f"UPDATED COURSE: ROW ID {id_value}")
+            except Exception as e:
+                print(f"Erreur lors de la mise à jour des cours : {e}")
+                return False
+            return True
 
     def delete(self, course: Course) -> bool:
         """Supprime en BD l'entité Course correspondant à course
