@@ -6,7 +6,7 @@ Classe abstraite générique Dao[T], dont hérite les classes de DAO de chaque e
 
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
-from typing import ClassVar, Optional
+from typing import ClassVar, Optional, Any
 import pymysql.cursors
 
 
@@ -36,12 +36,8 @@ class Dao[T](ABC):
         ...
 
     @abstractmethod
-    def update(self, obj: T) -> bool:
-        """Met à jour en BD l'entité correspondant à obj, pour y correspondre
-
-        :param obj: objet déjà mis à jour en mémoire
-        :return: True si la mise à jour a pu être réalisée
-        """
+    def update(self, id_entity: int, **fiels: Any) -> bool:
+        """Met à jour en BD l'entité correspondant à obj, pour y correspondre"""
         ...
 
     @abstractmethod

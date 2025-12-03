@@ -5,6 +5,7 @@ Classe School
 """
 
 from dataclasses import dataclass, field
+from typing import Any
 
 from daos.course_dao import CourseDao
 from models.course import Course
@@ -53,3 +54,8 @@ class School:
     def create_course(course: Course):
         course_dao: CourseDao = CourseDao()
         return course_dao.create(course)
+
+    @staticmethod
+    def update_course(course_id: int, **fields: Any):
+        course_dao: CourseDao = CourseDao()
+        return course_dao.update(course_id, **fields)
