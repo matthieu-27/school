@@ -7,7 +7,7 @@ Classe Dao[Course]
 from models.course import Course
 from daos.dao import Dao
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Any
 
 
 @dataclass
@@ -30,13 +30,37 @@ class CourseDao(Dao[Course]):
             sql = "SELECT * FROM course WHERE id_course=%s"
             cursor.execute(sql, (id_course,))
             record = cursor.fetchone()
+        course = CourseDao.check_record(record)
+
+        if course:
+            return course
+        else:
+            return None
+
+    @staticmethod
+    def check_record(record: tuple[Any, ...] | None) -> Course | None:
         if record is not None:
             course = Course(record['name'], record['start_date'], record['end_date'])
             course.id = record['id_course']
-        else:
-            course = None
+            return course
+        return None
 
-        return course
+
+    def read_all(self) -> list[Course]:
+        """Renvoie un ensemble de tous les cours présents en base de données."""
+        courses = []
+        try:
+            with Dao.connection.cursor() as cursor:
+                sql = "SELECT * FROM course"
+                cursor.execute(sql)
+                records = cursor.fetchall()
+            for rec in records:
+                course = self.check_record(rec)
+                if course:
+                    courses.append(course)
+        except Exception as e:
+            print(f"Erreur lors de la lecture des cours : {e}")
+        return courses
 
     def update(self, course: Course) -> bool:
         """Met à jour en BD l'entité Course correspondant à course, pour y correspondre
