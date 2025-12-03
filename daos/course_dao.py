@@ -12,14 +12,15 @@ from typing import Optional, Any
 
 @dataclass
 class CourseDao(Dao[Course]):
-    def create(self, course: Course) -> int:
-        """Crée en BD l'entité Course correspondant au cours course
+    def create(self, course: Course) -> None:
+        """ Enregistre un cours dans la base de données et indique un message de succès."""
+        with Dao.connection.cursor() as cursor:
+            sql = "INSERT INTO course (name, start_date, end_date, id_teacher) VALUES (%s, %s, %s, %s)"
+            values = (course.name, course.start_date, course.end_date, 1)
+            cursor.execute(sql, values)
+            Dao.connection.commit()
+            print(f"Record {cursor.rowcount} inserted")
 
-        :param course: à créer sous forme d'entité Course en BD
-        :return: l'id de l'entité insérée en BD (0 si la création a échoué)
-        """
-        ...
-        return 0
 
     def read(self, id_course: int) -> Optional[Course]:
         """Renvoit le cours correspondant à l'entité dont l'id est id_course

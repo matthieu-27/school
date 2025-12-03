@@ -48,3 +48,8 @@ class School:
     def get_course_by_id(id_course: int):
         course_dao: CourseDao = CourseDao()
         return course_dao.read(id_course)
+
+    @staticmethod
+    def create_course(course: Course):
+        course_dao: CourseDao = CourseDao()
+        return course_dao.create(course)
