@@ -5,9 +5,10 @@ Classe School
 """
 
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Optional
 
 from daos.course_dao import CourseDao
+from daos.student_dao import StudentDao
 from models.course import Course
 from models.teacher import Teacher
 from models.student import Student
@@ -38,12 +39,12 @@ class School:
         self.students.append(student)
 
     @staticmethod
-    def display_courses_list(self) -> list[Course]:
+    def display_courses_list() -> list[Course]:
         """Affichage de la liste des cours avec pour chacun d'eux :
         - leur enseignant
         - la liste des élèves le suivant"""
         course_dao: CourseDao = CourseDao()
-        return course_dao.read_all()
+        return course_dao.fetch_all()
 
     @staticmethod
     def get_course_by_id(id_course: int):
@@ -59,3 +60,18 @@ class School:
     def update_course(course_id: int, **fields: Any):
         course_dao: CourseDao = CourseDao()
         return course_dao.update(course_id, **fields)
+
+    @staticmethod
+    def delete_course(course_id: int):
+        course_dao: CourseDao = CourseDao()
+        return course_dao.delete(course_id)
+
+    @staticmethod
+    def create_student(student: Student):
+        student_dao: StudentDao = StudentDao()
+        return student_dao.create(student)
+
+    @staticmethod
+    def get_student_by_id(id_course: int):
+        student_dao: StudentDao = StudentDao()
+        return student_dao.read(id_course)

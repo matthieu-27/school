@@ -12,7 +12,7 @@ from typing import Optional, Any
 
 @dataclass
 class CourseDao(Dao[Course]):
-    def create(self, course: Course) -> None:
+    def create(self, course: Course) -> int:
         """ Enregistre un cours dans la base de données et indique un message de succès."""
         with Dao.connection.cursor() as cursor:
             sql = "INSERT INTO course (name, start_date, end_date, id_teacher) VALUES (%s, %s, %s, %s)"
@@ -20,33 +20,26 @@ class CourseDao(Dao[Course]):
             cursor.execute(sql, values)
             Dao.connection.commit()
             print(f"INSERTED COURSE: ROW ID {cursor.lastrowid}")
+            return cursor.lastrowid
+
 
     def read(self, id_course: int) -> Optional[Course]:
         """Renvoit le cours correspondant à l'entité dont l'id est id_course
            (ou None s'il n'a pu être trouvé)"""
         course: Optional[Course]
-
         with Dao.connection.cursor() as cursor:
             sql = "SELECT * FROM course WHERE id_course=%s"
             cursor.execute(sql, (id_course,))
             record = cursor.fetchone()
-        course = CourseDao.get_data(record)
-
-        if course:
-            return course
-        else:
-            return None
-
-    @staticmethod
-    def get_data(record: tuple[Any, ...] | None) -> Course | None:
         if record is not None:
             course = Course(record['name'], record['start_date'], record['end_date'])
             course.id = record['id_course']
-            # course.teacher = record['id_teacher'] TODO : IMPLEMENT DAO
-            return course
-        return None
+        else:
+            course = None
+        return course
 
-    def read_all(self) -> Optional[list[Course]]:
+
+    def fetch_all(self) -> list[Course]:
         """Renvoie un ensemble de tous les cours présents en base de données."""
         courses = []
         try:
@@ -54,16 +47,20 @@ class CourseDao(Dao[Course]):
                 sql = "SELECT * FROM course"
                 cursor.execute(sql)
                 records = cursor.fetchall()
-            for rec in records:
-                course = self.get_data(rec)
-                if course:
+            for record in records:
+                if record is not None:
+                    course = Course(record['name'], record['start_date'], record['end_date'])
+                    course.id = record['id_course']
                     courses.append(course)
+                else:
+                    course = None
         except Exception as e:
             print(f"Erreur lors de la lecture des cours : {e}")
-            return None
+            return list()
         return courses
 
-    def update(self, id_value: int, **fields: Any) -> bool:
+
+    def update(self, id_value: int, **fields: Any) -> bool:  # type: ignore
         """Met à jour en BD l'entité Course correspondant à course, pour y correspondre"""
         with Dao.connection.cursor() as cursor:
             query = ""
@@ -84,11 +81,17 @@ class CourseDao(Dao[Course]):
                 return False
             return True
 
-    def delete(self, course: Course) -> bool:
-        """Supprime en BD l'entité Course correspondant à course
 
-        :param course: cours dont l'entité Course correspondante est à supprimer
-        :return: True si la suppression a pu être réalisée
-        """
-        ...
-        return True
+    def delete(self, id_value: int) -> bool:
+        """Supprime en BD l'entité Course correspondant à course"""
+        with Dao.connection.cursor() as cursor:
+            sql = "DELETE FROM course WHERE id_course=%s"
+            try:
+                print(f"DELETING COURSE: ROW ID {id_value}")
+                cursor.execute(sql, (id_value,))
+                Dao.connection.commit()
+                return True
+            except Exception as e:
+                Dao.connection.rollback()
+                print(f"Erreur lors de la suppression du cours: {e}")
+                return False

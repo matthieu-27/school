@@ -21,6 +21,8 @@ class Student(Person):
     student_nbr: int = field(init=False)
     courses_taken: list[Course] = field(default_factory=list, init=False)
 
+
+
     def __post_init__(self):
         """Détermination du n° de l'élève créé."""
         Student.students_nb += 1

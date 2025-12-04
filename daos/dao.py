@@ -7,7 +7,9 @@ Classe abstraite générique Dao[T], dont hérite les classes de DAO de chaque e
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
 from typing import ClassVar, Optional, Any
-import pymysql.cursors
+import pymysql.cursors  # type: ignore
+
+from models.course import Course
 
 
 @dataclass
@@ -41,10 +43,11 @@ class Dao[T](ABC):
         ...
 
     @abstractmethod
-    def delete(self, obj: T) -> bool:
-        """Supprime en BD l'entité correspondant à obj
+    def delete(self, id_entity: int) -> bool:
+        """Supprime en BD l'entité correspondant à id_entity"""
+        ...
 
-        :param obj: objet dont l'entité correspondante est à supprimer
-        :return: True si la suppression a pu être réalisée
-        """
+    @abstractmethod
+    def fetch_all(self) -> Optional[list[T]]:
+        """Retourne toutes les entrées de la table"""
         ...
