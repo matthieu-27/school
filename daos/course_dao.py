@@ -63,11 +63,9 @@ class CourseDao(Dao[Course]):
     def update(self, id_value: int, **fields: Any) -> bool:  # type: ignore
         """Met à jour en BD l'entité Course correspondant à course, pour y correspondre"""
         with Dao.connection.cursor() as cursor:
-            query = ""
-            count = 1
-            for key, val in fields.items():
-                query += f"{key} = '{str(val)}'{", " if len(fields) != count else ""}"
-                count += 1
+            query: str
+            for index, (key, val) in enumerate(fields.items()):
+                query += f"{key} = '{str(val)}'{", " if len(fields) != index else ""}"
             sql = ("UPDATE course SET "
                    + query +
                    f" WHERE id_course={id_value}")

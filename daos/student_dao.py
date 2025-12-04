@@ -17,7 +17,7 @@ class StudentDao(Dao[Student]):
         with Dao.connection.cursor() as cursor:
             try:
                 # 1. Insertion dans la table person
-                person_sql = "INSERT INTO person (first_name, last_name, age) VALUES (%s, %s, %s)"
+                person_sql = """INSERT INTO person (first_name, last_name, age) VALUES (%s, %s, %s)"""
                 person_values = (student.first_name, student.last_name, student.age)
                 cursor.execute(person_sql, person_values)
                 inserted_id = cursor.lastrowid
@@ -38,11 +38,7 @@ class StudentDao(Dao[Student]):
            (ou None s'il n'a pu être trouvé)"""
         student: Optional[Student]
         with Dao.connection.cursor() as cursor:
-            sql = ("SELECT * "
-                    "FROM student s "
-                    "INNER JOIN person p "
-                    "ON s.id_person = p.id_person "
-                    "WHERE s.student_nbr = %s")
+            sql = """SELECT * FROM student s INNER JOIN person p ON s.id_person = p.id_person WHERE s.student_nbr = %s)"""
             cursor.execute(sql, (id_student,))
             record = cursor.fetchone()
         if record is not None:
@@ -58,16 +54,16 @@ class StudentDao(Dao[Student]):
         students = []
         try:
             with Dao.connection.cursor() as cursor:
-                sql = "SELECT * FROM student"
+                sql = """SELECT * FROM student s INNER JOIN person p ON s.id_person = p.id_person """
                 cursor.execute(sql)
                 records = cursor.fetchall()
-            for record in records:
-                if record is not None:
-                    student = Student(record['name'], record['start_date'], record['end_date'])
-                    student.id = record['id_student']
-                    students.append(student)
-                else:
-                    student = None
+                for record in records:
+                    if record is not None:
+                        student = Student(record['first_name'], record['last_name'], record['age'])
+                        student.student_nbr = record['student_nbr']
+                        students.append(student)
+                    else:
+                        student = None
         except Exception as e:
             print(f"Erreur lors de la lecture des étudiants : {e}")
             return list()
@@ -78,10 +74,8 @@ class StudentDao(Dao[Student]):
         """Met à jour en BD l'entité Student correspondant à id_value, pour y correspondre"""
         with Dao.connection.cursor() as cursor:
             query = ""
-            count = 1
-            for key, val in fields.items():
-                query += f"{key} = '{str(val)}'{", " if len(fields) != count else ""}"
-                count += 1
+            for index, (key, val) in enumerate(fields.items()):
+                query += f"{key} = '{str(val)}'{", " if len(fields) != index else ""}"
             sql = ("UPDATE student SET "
                    + query +
                    f" WHERE id_student={id_value}")
