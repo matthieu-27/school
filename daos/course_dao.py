@@ -23,13 +23,13 @@ class CourseDao(Dao[Course]):
             return cursor.lastrowid
 
 
-    def read(self, id_course: int) -> Optional[Course]:
-        """Renvoit le cours correspondant à l'entité dont l'id est id_course
+    def read(self, id_entity: int) -> Optional[Course]:
+        """Renvoit le cours correspondant à l'entité dont l'id est id_entity
            (ou None s'il n'a pu être trouvé)"""
         course: Optional[Course]
         with Dao.connection.cursor() as cursor:
             sql = "SELECT * FROM course WHERE id_course=%s"
-            cursor.execute(sql, (id_course,))
+            cursor.execute(sql, (id_entity,))
             record = cursor.fetchone()
         if record is not None:
             course = Course(record['name'], record['start_date'], record['end_date'])
@@ -59,34 +59,40 @@ class CourseDao(Dao[Course]):
             return list()
         return courses
 
+    def update(self, id_entity: int, **fields: Any) -> bool:
+        """Met à jour en BD l'entité Course correspondant à id_value."""
+        if not fields:
+            print("Aucun champ à mettre à jour.")
+            return False
 
-    def update(self, id_value: int, **fields: Any) -> bool:  # type: ignore
-        """Met à jour en BD l'entité Course correspondant à course, pour y correspondre"""
         with Dao.connection.cursor() as cursor:
-            query: str
-            for index, (key, val) in enumerate(fields.items()):
-                query += f"{key} = '{str(val)}'{", " if len(fields) != index else ""}"
-            sql = ("UPDATE course SET "
-                   + query +
-                   f" WHERE id_course={id_value}")
-            print(sql)
+            # Construction sécurisée de la requête
+            set_clauses = [f"{key} = %s" for key in fields.keys()]
+            values = list(fields.values()) + [id_entity]  # Ajoute id_entity pour le WHERE
+
+            sql = (
+                    "UPDATE course "
+                    "SET " + ", ".join(set_clauses) + " "
+                                                      "WHERE id_course = %s"
+            )
             try:
-                cursor.execute(sql)
+                cursor.execute(sql, values)
                 Dao.connection.commit()
-                print(f"UPDATED COURSE: ROW ID {id_value}")
+                print(f"UPDATED COURSE: id_course {id_entity}")
+                return True
             except Exception as e:
-                print(f"Erreur lors de la mise à jour des cours : {e}")
+                print(f"Erreur lors de la mise à jour du cours : {e}")
+                Dao.connection.rollback()
                 return False
-            return True
 
 
-    def delete(self, id_value: int) -> bool:
+    def delete(self, id_entity: int) -> bool:
         """Supprime en BD l'entité Course correspondant à course"""
         with Dao.connection.cursor() as cursor:
             sql = "DELETE FROM course WHERE id_course=%s"
             try:
-                print(f"DELETING COURSE: ROW ID {id_value}")
-                cursor.execute(sql, (id_value,))
+                print(f"DELETING COURSE: ROW ID {id_entity}")
+                cursor.execute(sql, (id_entity,))
                 Dao.connection.commit()
                 return True
             except Exception as e:

@@ -33,13 +33,13 @@ class StudentDao(Dao[Student]):
                 raise Exception(f"Erreur lors de la création de l'étudiant : {e}")
 
 
-    def read(self, id_student: int) -> Optional[Student]:
+    def read(self, id_entity: int) -> Optional[Student]:
         """Renvoit l'étudiant correspondant à l'entité dont l'id est id_student
            (ou None s'il n'a pu être trouvé)"""
         student: Optional[Student]
         with Dao.connection.cursor() as cursor:
             sql = """SELECT * FROM student s INNER JOIN person p ON s.id_person = p.id_person WHERE s.student_nbr = %s)"""
-            cursor.execute(sql, (id_student,))
+            cursor.execute(sql, (id_entity,))
             record = cursor.fetchone()
         if record is not None:
             student = Student(record['first_name'], record['last_name'], record['age'])
@@ -70,12 +70,11 @@ class StudentDao(Dao[Student]):
         return students
 
 
-    def update(self, id_value: int, **fields: Any) -> bool:  # type: ignore
+    def update(self, id_entity: int, **fields: Any) -> bool:
         """Met à jour en BD l'entité Student correspondant à id_value, pour y correspondre"""
         if not fields:
             print("Aucun champ à mettre à jour.")
             return False
-
         with Dao.connection.cursor() as cursor:
             # Construction de la partie SET de la requête
             set_clauses = []
@@ -83,7 +82,7 @@ class StudentDao(Dao[Student]):
             for key, val in fields.items():
                 set_clauses.append(f"{key} = %s")
                 values.append(val)
-            values.append(id_value)
+            values.append(id_entity)
             sql = (
                     "UPDATE person "
                     "JOIN student ON student.id_person = person.id_person "
@@ -93,23 +92,24 @@ class StudentDao(Dao[Student]):
             try:
                 cursor.execute(sql, values)
                 Dao.connection.commit()
-                print(f"UPDATED COURSE: ROW ID {id_value}")
+                print(f"UPDATED COURSE: ROW ID {id_entity}")
             except Exception as e:
                 print(f"Erreur lors de la mise à jour des étudiants : {e}")
                 return False
             return True
 
 
-    def delete(self, id_value: int) -> bool:
+    def delete(self, id_entity: int) -> bool:
         """Supprime en BD l'entité Student correspondant à id_value"""
         with Dao.connection.cursor() as cursor:
             sql = "DELETE FROM student WHERE id_student=%s"
             try:
-                print(f"DELETING COURSE: ROW ID {id_value}")
-                cursor.execute(sql, (id_value,))
+                print(f"DELETING COURSE: ROW ID {id_entity}")
+                cursor.execute(sql, (id_entity,))
                 Dao.connection.commit()
                 return True
             except Exception as e:
                 Dao.connection.rollback()
                 print(f"Erreur lors de la suppression de l'étudiant: {e}")
                 return False
+
