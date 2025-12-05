@@ -19,5 +19,4 @@ if __name__ == "__main__":
     # school.delete_course(school.create_course(svt))
 
 
-    joe = school.create_student(Student("Joe", "Malo", 15))
-    joe.__str__()
+    school.update_student(33, last_name="Malu", age=13)

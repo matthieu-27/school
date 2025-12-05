@@ -72,6 +72,22 @@ class School:
         return student_dao.create(student)
 
     @staticmethod
-    def get_student_by_id(id_course: int):
+    def update_student(student_nbr: int, **fields: Any):
         student_dao: StudentDao = StudentDao()
-        return student_dao.read(id_course)
+        return student_dao.update(student_nbr, **fields)
+
+    @staticmethod
+    def delete_student(student_id: int):
+        student_dao: StudentDao = StudentDao()
+        return student_dao.delete(student_id)
+
+    @staticmethod
+    def get_student_by_id(student_id: int):
+        student_dao: StudentDao = StudentDao()
+        return student_dao.read(student_id)
+
+    @staticmethod
+    def display_student_list() -> list[Student]:
+        """Affichage de la liste des élèves"""
+        student_dao: StudentDao = StudentDao()
+        return student_dao.fetch_all()

@@ -72,16 +72,26 @@ class StudentDao(Dao[Student]):
 
     def update(self, id_value: int, **fields: Any) -> bool:  # type: ignore
         """Met à jour en BD l'entité Student correspondant à id_value, pour y correspondre"""
+        if not fields:
+            print("Aucun champ à mettre à jour.")
+            return False
+
         with Dao.connection.cursor() as cursor:
-            query = ""
-            for index, (key, val) in enumerate(fields.items()):
-                query += f"{key} = '{str(val)}'{", " if len(fields) != index else ""}"
-            sql = ("UPDATE student SET "
-                   + query +
-                   f" WHERE id_student={id_value}")
-            print(sql)
+            # Construction de la partie SET de la requête
+            set_clauses = []
+            values = []
+            for key, val in fields.items():
+                set_clauses.append(f"{key} = %s")
+                values.append(val)
+            values.append(id_value)
+            sql = (
+                    "UPDATE person "
+                    "JOIN student ON student.id_person = person.id_person "
+                    "SET " + ", ".join(set_clauses) + " "
+                                                      "WHERE student.student_nbr = %s"
+            )
             try:
-                cursor.execute(sql)
+                cursor.execute(sql, values)
                 Dao.connection.commit()
                 print(f"UPDATED COURSE: ROW ID {id_value}")
             except Exception as e:
